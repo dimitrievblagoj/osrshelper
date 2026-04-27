@@ -59,12 +59,6 @@ body {
   gap: 8px;
 }
 
-.two-col {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 10px;
-}
-
 .field {
   display: flex;
   flex-direction: column;
@@ -92,31 +86,15 @@ body {
   color: #dbe1f0;
 }
 
-.button-row {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 10px;
-}
-
-.cta,
-.secondary {
+.cta {
   width: 100%;
   padding: 11px 14px;
-  border-radius: 10px;
-  font-weight: 700;
-  cursor: pointer;
-}
-
-.cta {
   border: none;
+  border-radius: 10px;
   background: var(--accent);
   color: #16120b;
-}
-
-.secondary {
-  border: 1px solid var(--border);
-  background: #111720;
-  color: var(--text);
+  font-weight: 700;
+  cursor: pointer;
 }
 
 .results-card section {
@@ -133,23 +111,6 @@ body {
   padding-left: 18px;
 }
 
-.setup-block {
-  border: 1px solid var(--border);
-  border-radius: 10px;
-  padding: 10px;
-  margin-bottom: 10px;
-  background: #131924;
-}
-
-.setup-block h4 {
-  margin: 0 0 6px;
-}
-
-.setup-sub {
-  margin: 6px 0;
-  color: var(--muted);
-}
-
 .muted {
   color: var(--muted);
 }
@@ -161,9 +122,7 @@ body {
 }
 
 @media (max-width: 900px) {
-  .layout,
-  .two-col,
-  .button-row {
+  .layout {
     grid-template-columns: 1fr;
   }
 

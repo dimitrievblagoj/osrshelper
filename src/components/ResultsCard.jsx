@@ -59,39 +59,9 @@ export default function ResultsCard({ results }) {
         </ul>
       </section>
 
-      <section>
-        <h3>Top weighted goals</h3>
-        <ul>
-          {results.topGoals.map((goal) => (
-            <li key={goal.key}>
-              {goal.goal} — <strong>{goal.score}</strong>
-            </li>
-          ))}
-        </ul>
-      </section>
-
-      <section>
-        <h3>Per-boss setup checklist</h3>
-        {results.bossSetups.map((setup) => (
-          <div key={setup.boss} className="setup-block">
-            <h4>{setup.boss}</h4>
-            <p className="setup-sub">Suggested gear:</p>
-            <ul>
-              {setup.gear.map((g) => (
-                <li key={`${setup.boss}-${g}`}>{g}</li>
-              ))}
-            </ul>
-            <p className="setup-sub">Prep checklist:</p>
-            <ul>
-              {setup.checklist.map((c) => (
-                <li key={`${setup.boss}-${c}`}>{c}</li>
-              ))}
-            </ul>
-          </div>
-        ))}
-      </section>
-
-      <p className="mvp-note">This is a simple MVP, recommendations are not perfect yet.</p>
+      <p className="mvp-note">
+        This is a simple MVP, recommendations are not perfect yet.
+      </p>
     </div>
   );
 }
