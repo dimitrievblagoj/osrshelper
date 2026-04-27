@@ -6,9 +6,9 @@ const baseProfile = {
     attack: 60,
     strength: 60,
     defence: 60,
-    ranged: 66,
-    magic: 62,
-    prayer: 39,
+    ranged: 60,
+    magic: 60,
+    prayer: 43,
     hitpoints: 60,
     slayer: 55
   },
@@ -44,26 +44,25 @@ const baseProfile = {
 };
 
 describe('getRecommendations', () => {
-  it('returns exactly six readiness score cards', () => {
+  it('prioritizes barrows gloves when RFD not complete', () => {
     const result = getRecommendations(baseProfile);
-    expect(result.readinessScores).toHaveLength(6);
+    expect(result.bestGoal.toLowerCase()).toContain('barrows gloves');
   });
 
-  it('provides detailed best next move text and priority', () => {
-    const result = getRecommendations(baseProfile);
-    expect(result.bestNextMove.whatToDo.length).toBeGreaterThan(10);
-    expect(['High', 'Medium', 'Low']).toContain(result.bestNextMove.priority);
-    expect(result.bestNextMove.whyItMatters.length).toBeGreaterThan(10);
-    expect(result.bestNextMove.whatItUnlocks.length).toBeGreaterThan(10);
-  });
-
-  it('adds hardcore warning and summary text for sharing', () => {
+  it('adds vorkath when DS2 complete and ranged >= 75', () => {
     const profile = structuredClone(baseProfile);
-    profile.accountType = 'Hardcore Ironman';
+    profile.stats.ranged = 80;
+    profile.quests.dragonSlayer2 = true;
 
     const result = getRecommendations(profile);
-    expect(result.warnings.some((w) => w.toLowerCase().includes('hardcore warning'))).toBe(true);
-    expect(result.summaryText).toContain('My OSRS Next Move:');
-    expect(result.summaryText).toContain('Fire Cape readiness:');
+    expect(result.bossesNow.some((b) => b.toLowerCase().includes('vorkath'))).toBe(true);
+  });
+
+  it('adds account type explanation for ironman variants', () => {
+    const profile = structuredClone(baseProfile);
+    profile.accountType = 'Ironman';
+
+    const result = getRecommendations(profile);
+    expect(result.explanations.some((e) => e.toLowerCase().includes('account type note'))).toBe(true);
   });
 });

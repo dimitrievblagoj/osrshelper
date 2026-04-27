@@ -1,12 +1,12 @@
 import React from 'react';
 
 /**
- * Reusable dropdown selector (used for budget and account type).
+ * Reusable budget dropdown.
  */
-export default function BudgetSelector({ label = 'Budget', value, onChange, options }) {
+export default function BudgetSelector({ value, onChange, options }) {
   return (
     <label className="field">
-      <span className="field-label">{label}</span>
+      <span className="field-label">Budget</span>
       <select className="field-input" value={value} onChange={(e) => onChange(e.target.value)}>
         {options.map((opt) => (
           <option key={opt} value={opt}>

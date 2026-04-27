@@ -1,18 +1,9 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import StatInput from './components/StatInput';
 import QuestCheckbox from './components/QuestCheckbox';
 import BudgetSelector from './components/BudgetSelector';
 import ResultsCard from './components/ResultsCard';
-import {
-  accountTypeOptions,
-  budgetOptions,
-  diaryList,
-  getRecommendations,
-  questList,
-  untradeableList
-} from './recommendationRules';
-
-const STORAGE_KEY = 'osrs-next-move-helper-profile-v1';
+import { budgetOptions, getRecommendations, questList } from './recommendationRules';
 
 const defaultStats = {
   attack: 60,
@@ -26,41 +17,17 @@ const defaultStats = {
 };
 
 const defaultQuests = Object.fromEntries(questList.map((q) => [q.key, false]));
-const defaultDiaries = Object.fromEntries(diaryList.map((d) => [d.key, false]));
-const defaultUntradeables = Object.fromEntries(untradeableList.map((u) => [u.key, false]));
-
-function loadProfile() {
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    if (!raw) return null;
-    return JSON.parse(raw);
-  } catch {
-    return null;
-  }
-}
 
 export default function App() {
-  const saved = typeof window !== 'undefined' ? loadProfile() : null;
-
-  const [stats, setStats] = useState(saved?.stats ?? defaultStats);
-  const [quests, setQuests] = useState(saved?.quests ?? defaultQuests);
-  const [diaries, setDiaries] = useState(saved?.diaries ?? defaultDiaries);
-  const [untradeables, setUntradeables] = useState(saved?.untradeables ?? defaultUntradeables);
-  const [budget, setBudget] = useState(saved?.budget ?? budgetOptions[0]);
-  const [accountType, setAccountType] = useState(saved?.accountType ?? accountTypeOptions[0]);
-  const [hasSubmitted, setHasSubmitted] = useState(saved?.hasSubmitted ?? false);
-
-  useEffect(() => {
-    localStorage.setItem(
-      STORAGE_KEY,
-      JSON.stringify({ stats, quests, diaries, untradeables, budget, accountType, hasSubmitted })
-    );
-  }, [stats, quests, diaries, untradeables, budget, accountType, hasSubmitted]);
+  const [stats, setStats] = useState(defaultStats);
+  const [quests, setQuests] = useState(defaultQuests);
+  const [budget, setBudget] = useState(budgetOptions[0]);
+  const [hasSubmitted, setHasSubmitted] = useState(false);
 
   const results = useMemo(() => {
     if (!hasSubmitted) return null;
-    return getRecommendations({ stats, quests, diaries, untradeables, budget, accountType });
-  }, [stats, quests, diaries, untradeables, budget, accountType, hasSubmitted]);
+    return getRecommendations({ stats, quests, budget });
+  }, [stats, quests, budget, hasSubmitted]);
 
   return (
     <main className="page">
@@ -102,58 +69,12 @@ export default function App() {
           </div>
 
           <div className="section-block">
-            <h3>Achievement Diaries</h3>
-            <div className="quest-grid">
-              {diaryList.map((d) => (
-                <QuestCheckbox
-                  key={d.key}
-                  label={d.label}
-                  checked={diaries[d.key]}
-                  onChange={(checked) => setDiaries((prev) => ({ ...prev, [d.key]: checked }))}
-                />
-              ))}
-            </div>
+            <BudgetSelector value={budget} onChange={setBudget} options={budgetOptions} />
           </div>
 
-          <div className="section-block">
-            <h3>Untradeables</h3>
-            <div className="quest-grid">
-              {untradeableList.map((u) => (
-                <QuestCheckbox
-                  key={u.key}
-                  label={u.label}
-                  checked={untradeables[u.key]}
-                  onChange={(checked) => setUntradeables((prev) => ({ ...prev, [u.key]: checked }))}
-                />
-              ))}
-            </div>
-          </div>
-
-          <div className="section-block two-col">
-            <BudgetSelector label="Budget" value={budget} onChange={setBudget} options={budgetOptions} />
-            <BudgetSelector label="Account Type" value={accountType} onChange={setAccountType} options={accountTypeOptions} />
-          </div>
-
-          <div className="button-row">
-            <button className="cta" onClick={() => setHasSubmitted(true)}>
-              Find My Next Move
-            </button>
-            <button
-              className="secondary"
-              onClick={() => {
-                setStats(defaultStats);
-                setQuests(defaultQuests);
-                setDiaries(defaultDiaries);
-                setUntradeables(defaultUntradeables);
-                setBudget(budgetOptions[0]);
-                setAccountType(accountTypeOptions[0]);
-                setHasSubmitted(false);
-                localStorage.removeItem(STORAGE_KEY);
-              }}
-            >
-              Reset Profile
-            </button>
-          </div>
+          <button className="cta" onClick={() => setHasSubmitted(true)}>
+            Find My Next Move
+          </button>
         </section>
 
         <section className="panel">
