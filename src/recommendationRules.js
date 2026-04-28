@@ -9,7 +9,7 @@ export const questList = [
   { key: 'recipeForDisaster', label: 'Recipe for Disaster / Barrows Gloves' },
   { key: 'desertTreasure1', label: 'Desert Treasure I' },
   { key: 'desertTreasure2', label: 'Desert Treasure II' },
-  { key: 'kingsRansom', label: 'King’s Ransom' },
+  { key: 'kingsRansom', label: "King's Ransom" },
   { key: 'priestInPeril', label: 'Priest in Peril' },
   { key: 'sinsOfTheFather', label: 'Sins of the Father' },
   { key: 'songOfTheElves', label: 'Song of the Elves' },
