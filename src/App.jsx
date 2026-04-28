@@ -18,16 +18,66 @@ const defaultStats = {
 
 const defaultQuests = Object.fromEntries(questList.map((q) => [q.key, false]));
 
+const lookupErrorByCode = {
+  PLAYER_NOT_FOUND: 'Player not found or not ranked on hiscores.',
+  HISCORES_UNAVAILABLE: 'Hiscores are currently unavailable.',
+  UNKNOWN_ERROR: 'Something went wrong while fetching stats.'
+};
+
+function getLookupError(payload) {
+  if (payload && typeof payload === 'object' && typeof payload.code === 'string') {
+    return lookupErrorByCode[payload.code] || 'Something went wrong while fetching stats.';
+  }
+
+  return 'Something went wrong while fetching stats.';
+}
+
 export default function App() {
   const [stats, setStats] = useState(defaultStats);
   const [quests, setQuests] = useState(defaultQuests);
   const [budget, setBudget] = useState(budgetOptions[0]);
   const [hasSubmitted, setHasSubmitted] = useState(false);
+  const [playerName, setPlayerName] = useState('');
+  const [totalLevel, setTotalLevel] = useState(null);
+  const [lookupState, setLookupState] = useState({ loading: false, error: '', success: '' });
 
   const results = useMemo(() => {
     if (!hasSubmitted) return null;
     return getRecommendations({ stats, quests, budget });
   }, [stats, quests, budget, hasSubmitted]);
+
+  async function handleFetchStats() {
+    const trimmedPlayerName = playerName.trim();
+
+    if (!trimmedPlayerName) {
+      setLookupState({ loading: false, error: 'Please enter an RSN before fetching stats.', success: '' });
+      return;
+    }
+
+    setLookupState({ loading: true, error: '', success: '' });
+
+    try {
+      const response = await fetch(`/api/hiscores?player=${encodeURIComponent(trimmedPlayerName)}`);
+      const payload = await response.json();
+
+      if (!response.ok) {
+        throw new Error(getLookupError(payload));
+      }
+
+      setStats((previousStats) => ({
+        ...previousStats,
+        ...payload.stats
+      }));
+      setTotalLevel(payload.stats.totalLevel);
+      setLookupState({ loading: false, error: '', success: `Fetched stats for ${payload.player}.` });
+    } catch (error) {
+      setLookupState({
+        loading: false,
+        error: error instanceof Error ? error.message : 'Something went wrong while fetching stats.',
+        success: ''
+      });
+    }
+  }
 
   return (
     <main className="page">
@@ -39,6 +89,27 @@ export default function App() {
       <div className="layout">
         <section className="panel form-panel">
           <h2>Your Account Snapshot</h2>
+
+          <div className="section-block">
+            <h3>Quick-fill From Hiscores</h3>
+            <p className="helper-text">Enter an RSN to fetch combat stats + Slayer from the official OSRS hiscores.</p>
+            <div className="rsn-lookup">
+              <input
+                className="rsn-input"
+                type="text"
+                value={playerName}
+                onChange={(event) => setPlayerName(event.target.value)}
+                maxLength={12}
+                placeholder="Enter RSN"
+              />
+              <button className="secondary-cta" onClick={handleFetchStats} disabled={lookupState.loading}>
+                {lookupState.loading ? 'Fetching...' : 'Fetch Stats'}
+              </button>
+            </div>
+            {totalLevel ? <p className="helper-text">Total level: {totalLevel}</p> : null}
+            {lookupState.error ? <p className="error-text">{lookupState.error}</p> : null}
+            {lookupState.success ? <p className="success-text">{lookupState.success}</p> : null}
+          </div>
 
           <div className="section-block">
             <h3>Combat & Slayer Levels</h3>
