@@ -1,5 +1,30 @@
 import React from 'react';
 
+function BossList({ bosses }) {
+  return (
+    <div className="boss-list">
+      {bosses.map((boss) => (
+        <article className="boss-item" key={boss.name}>
+          <h4>
+            {boss.name} <span className="boss-difficulty">({boss.difficulty})</span>
+          </h4>
+          <p><strong>Style:</strong> {boss.style}</p>
+          <p><strong>Why do this:</strong> {boss.why}</p>
+          <p><strong>What it teaches:</strong> {boss.teaches}</p>
+          {boss.requirementsMet.length > 0 ? (
+            <p><strong>Requirements met:</strong> {boss.requirementsMet.join(', ')}</p>
+          ) : null}
+          {boss.requirementsMissing.length > 0 ? (
+            <p><strong>Requirements missing:</strong> {boss.requirementsMissing.join(', ')}</p>
+          ) : null}
+          {boss.warning ? <p className="warning-text"><strong>Warning:</strong> {boss.warning}</p> : null}
+          {boss.accountNote ? <p className="helper-text"><strong>Account note:</strong> {boss.accountNote}</p> : null}
+        </article>
+      ))}
+    </div>
+  );
+}
+
 /**
  * Shows recommendation output in a structured card.
  */
@@ -23,35 +48,32 @@ export default function ResultsCard({ results }) {
       </section>
 
       <section>
-        <h3>2) Bosses you can try now</h3>
-        <ul>
-          {results.bossesNow.map((item) => (
-            <li key={item}>{item}</li>
-          ))}
-        </ul>
+        <h3>2) Bosses You Can Try Now</h3>
+        <BossList bosses={results.bossesNowDetailed} />
       </section>
 
       <section>
-        <h3>3) Bosses / raids you are close to unlocking</h3>
-        <ul>
-          {results.closeUnlocks.map((item) => (
-            <li key={item}>{item}</li>
-          ))}
-        </ul>
+        <h3>3) You Are Close To</h3>
+        <BossList bosses={results.closeBossesDetailed} />
       </section>
 
       <section>
-        <h3>4) Recommended skill to train next</h3>
+        <h3>4) Locked For Later</h3>
+        <BossList bosses={results.lockedBossesDetailed} />
+      </section>
+
+      <section>
+        <h3>5) Recommended skill to train next</h3>
         <p>{results.skillToTrain}</p>
       </section>
 
       <section>
-        <h3>5) Suggested gear upgrade (budget-based)</h3>
+        <h3>6) Suggested gear upgrade (budget-based)</h3>
         <p>{results.gearUpgrade}</p>
       </section>
 
       <section>
-        <h3>6) Why these recommendations?</h3>
+        <h3>7) Why these recommendations?</h3>
         <ul>
           {results.explanations.map((item) => (
             <li key={item}>{item}</li>

@@ -3,7 +3,7 @@ import StatInput from './components/StatInput';
 import QuestCheckbox from './components/QuestCheckbox';
 import BudgetSelector from './components/BudgetSelector';
 import ResultsCard from './components/ResultsCard';
-import { budgetOptions, getRecommendations, questList } from './recommendationRules';
+import { accountTypeOptions, budgetOptions, getRecommendations, questList } from './recommendationRules';
 
 const defaultStats = {
   attack: 60,
@@ -36,14 +36,48 @@ export default function App() {
   const [stats, setStats] = useState(defaultStats);
   const [quests, setQuests] = useState(defaultQuests);
   const [budget, setBudget] = useState(budgetOptions[0]);
+  const [accountType, setAccountType] = useState(accountTypeOptions[0]);
   const [hasSubmitted, setHasSubmitted] = useState(false);
   const [rsn, setRsn] = useState('');
   const [lookupState, setLookupState] = useState({ loading: false, error: '', success: '' });
 
   const results = useMemo(() => {
     if (!hasSubmitted) return null;
-    return getRecommendations({ stats, quests, budget });
-  }, [stats, quests, budget, hasSubmitted]);
+    return getRecommendations({ stats, quests, budget, accountType });
+  }, [stats, quests, budget, accountType, hasSubmitted]);
+
+  async function handleFetchStats() {
+    const trimmedPlayerName = playerName.trim();
+
+    if (!trimmedPlayerName) {
+      setLookupState({ loading: false, error: 'Please enter an RSN before fetching stats.', success: '' });
+      return;
+    }
+
+    setLookupState({ loading: true, error: '', success: '' });
+
+    try {
+      const response = await fetch(`/api/hiscores?player=${encodeURIComponent(trimmedPlayerName)}`);
+      const payload = await response.json();
+
+      if (!response.ok) {
+        throw new Error(getLookupError(payload));
+      }
+
+      setStats((previousStats) => ({
+        ...previousStats,
+        ...payload.stats
+      }));
+      setTotalLevel(payload.stats.totalLevel);
+      setLookupState({ loading: false, error: '', success: `Fetched stats for ${payload.player}.` });
+    } catch (error) {
+      setLookupState({
+        loading: false,
+        error: error instanceof Error ? error.message : 'Something went wrong while fetching stats.',
+        success: ''
+      });
+    }
+  }
 
   async function handleRsnLookup() {
     const trimmedRsn = rsn.trim();
@@ -117,6 +151,18 @@ export default function App() {
               <StatInput label="Hitpoints" value={stats.hitpoints} onChange={(v) => setStats((s) => ({ ...s, hitpoints: v }))} />
               <StatInput label="Slayer" value={stats.slayer} onChange={(v) => setStats((s) => ({ ...s, slayer: v }))} />
             </div>
+          </div>
+
+
+          <div className="section-block">
+            <h3>Account Type</h3>
+            <select className="rsn-input" value={accountType} onChange={(event) => setAccountType(event.target.value)}>
+              {accountTypeOptions.map((option) => (
+                <option key={option} value={option}>
+                  {option}
+                </option>
+              ))}
+            </select>
           </div>
 
           <div className="section-block">
