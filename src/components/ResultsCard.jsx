@@ -1,4 +1,68 @@
-import React from 'react';
+import React, { useMemo, useState } from 'react';
+
+const DEFAULT_VISIBLE = 4;
+
+function badgeTone(difficulty) {
+  if (difficulty === 'Beginner' || difficulty === 'Easy') return 'badge badge-easy';
+  if (difficulty === 'Medium') return 'badge badge-medium';
+  if (difficulty === 'Hard') return 'badge badge-hard';
+  return 'badge badge-endgame';
+}
+
+function BossCard({ boss }) {
+  return (
+    <article className="boss-item">
+      <div className="boss-item-head">
+        <h4>{boss.name}</h4>
+        <div className="badge-wrap">
+          <span className={badgeTone(boss.difficulty)}>{boss.difficulty}</span>
+          {boss.category ? <span className="badge">{boss.category}</span> : null}
+        </div>
+      </div>
+
+      <p className="boss-why">{boss.why}</p>
+
+      {boss.requirementsMissing.length > 0 ? (
+        <div className="chip-row">
+          {boss.requirementsMissing.slice(0, 4).map((missing) => (
+            <span className="chip" key={missing}>
+              {missing}
+            </span>
+          ))}
+        </div>
+      ) : (
+        <p className="success-text">All key requirements met.</p>
+      )}
+
+      {boss.warning ? <p className="warning-text">⚠️ {boss.warning}</p> : null}
+    </article>
+  );
+}
+
+function BossSection({ title, summary, items, visibleCount, expanded, onToggle }) {
+  const shown = expanded ? items : items.slice(0, visibleCount);
+
+  return (
+    <section className="results-section">
+      <div className="section-head">
+        <h3>{title}</h3>
+        <p className="muted">{summary}</p>
+      </div>
+
+      <div className="boss-list compact">
+        {shown.map((boss) => (
+          <BossCard boss={boss} key={boss.name} />
+        ))}
+      </div>
+
+      {items.length > visibleCount ? (
+        <button className="link-btn" onClick={onToggle}>
+          {expanded ? 'Show less' : `Show more (${items.length - visibleCount} more)`}
+        </button>
+      ) : null}
+    </section>
+  );
+}
 
 function BossList({ bosses }) {
   return (
@@ -29,6 +93,10 @@ function BossList({ bosses }) {
  * Shows recommendation output in a structured card.
  */
 export default function ResultsCard({ results }) {
+  const [expanded, setExpanded] = useState({ now: false, close: false, locked: false, skilling: false });
+
+  const topActions = useMemo(() => results?.explanations?.slice(0, 3) ?? [], [results]);
+
   if (!results) {
     return (
       <div className="results-card muted">
@@ -81,9 +149,15 @@ export default function ResultsCard({ results }) {
         </ul>
       </section>
 
-      <p className="mvp-note">
-        This is a simple MVP, recommendations are not perfect yet.
-      </p>
+      <section className="results-section compact-meta">
+        <h3>Recommended account upgrades</h3>
+        <p>
+          <strong>Train next:</strong> {results.skillToTrain}
+        </p>
+        <p>
+          <strong>Gear direction:</strong> {results.gearUpgrade}
+        </p>
+      </section>
     </div>
   );
 }
