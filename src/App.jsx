@@ -18,6 +18,20 @@ const defaultStats = {
 
 const defaultQuests = Object.fromEntries(questList.map((q) => [q.key, false]));
 
+const lookupErrorByCode = {
+  PLAYER_NOT_FOUND: 'Player not found or not ranked on hiscores.',
+  HISCORES_UNAVAILABLE: 'Hiscores are currently unavailable.',
+  UNKNOWN_ERROR: 'Something went wrong while fetching stats.'
+};
+
+function getLookupError(payload) {
+  if (payload && typeof payload === 'object' && typeof payload.code === 'string') {
+    return lookupErrorByCode[payload.code] || 'Something went wrong while fetching stats.';
+  }
+
+  return 'Something went wrong while fetching stats.';
+}
+
 export default function App() {
   const [stats, setStats] = useState(defaultStats);
   const [quests, setQuests] = useState(defaultQuests);
