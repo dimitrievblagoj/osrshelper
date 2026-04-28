@@ -48,44 +48,32 @@ export default function ResultsCard({ results }) {
       </section>
 
       <section>
-        <h3>2) Combat Bosses You Can Try Now</h3>
+        <h3>2) Bosses You Can Try Now</h3>
         <BossList bosses={results.bossesNowDetailed} />
       </section>
 
       <section>
-        <h3>3) Combat Bosses You Are Close To</h3>
+        <h3>3) You Are Close To</h3>
         <BossList bosses={results.closeBossesDetailed} />
       </section>
 
       <section>
-        <h3>4) Locked PvM Goals</h3>
+        <h3>4) Locked For Later</h3>
         <BossList bosses={results.lockedBossesDetailed} />
       </section>
 
-
-      {results.skillingActivities && results.skillingActivities.length > 0 ? (
-        <section>
-          <h3>5) Skilling Activities</h3>
-          <ul>
-            {results.skillingActivities.map((activity) => (
-              <li key={activity.name}>{activity.note}</li>
-            ))}
-          </ul>
-        </section>
-      ) : null}
-
       <section>
-        <h3>6) Recommended skill to train next</h3>
+        <h3>5) Recommended skill to train next</h3>
         <p>{results.skillToTrain}</p>
       </section>
 
       <section>
-        <h3>7) Suggested gear upgrade (budget-based)</h3>
+        <h3>6) Suggested gear upgrade (budget-based)</h3>
         <p>{results.gearUpgrade}</p>
       </section>
 
       <section>
-        <h3>8) Why these recommendations?</h3>
+        <h3>7) Why these recommendations?</h3>
         <ul>
           {results.explanations.map((item) => (
             <li key={item}>{item}</li>
