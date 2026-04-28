@@ -38,8 +38,7 @@ export default function App() {
   const [budget, setBudget] = useState(budgetOptions[0]);
   const [accountType, setAccountType] = useState(accountTypeOptions[0]);
   const [hasSubmitted, setHasSubmitted] = useState(false);
-  const [playerName, setPlayerName] = useState('');
-  const [totalLevel, setTotalLevel] = useState(null);
+  const [rsn, setRsn] = useState('');
   const [lookupState, setLookupState] = useState({ loading: false, error: '', success: '' });
 
   const results = useMemo(() => {
@@ -80,6 +79,35 @@ export default function App() {
     }
   }
 
+  async function handleRsnLookup() {
+    const trimmedRsn = rsn.trim();
+
+    if (!trimmedRsn) {
+      setLookupState({ loading: false, error: 'Enter an RSN before looking up levels.', success: '' });
+      return;
+    }
+
+    setLookupState({ loading: true, error: '', success: '' });
+
+    try {
+      const response = await fetch(`/api/lookup-rsn?rsn=${encodeURIComponent(trimmedRsn)}`);
+      const payload = await response.json();
+
+      if (!response.ok) {
+        throw new Error(payload.error || 'Unable to load stats from the hiscores right now.');
+      }
+
+      setStats((previous) => ({ ...previous, ...payload.stats }));
+      setLookupState({ loading: false, error: '', success: `Loaded combat + Slayer levels for ${payload.rsn}.` });
+    } catch (error) {
+      setLookupState({
+        loading: false,
+        error: error instanceof Error ? error.message : 'Unable to load stats from the hiscores right now.',
+        success: ''
+      });
+    }
+  }
+
   return (
     <main className="page">
       <header className="title-wrap">
@@ -93,21 +121,20 @@ export default function App() {
 
           <div className="section-block">
             <h3>Quick-fill From Hiscores</h3>
-            <p className="helper-text">Enter an RSN to fetch combat stats + Slayer from the official OSRS hiscores.</p>
+            <p className="helper-text">Use your RSN to auto-fill combat and Slayer levels from the official hiscores.</p>
             <div className="rsn-lookup">
               <input
                 className="rsn-input"
                 type="text"
-                value={playerName}
-                onChange={(event) => setPlayerName(event.target.value)}
+                value={rsn}
+                onChange={(event) => setRsn(event.target.value)}
                 maxLength={12}
                 placeholder="Enter RSN"
               />
-              <button className="secondary-cta" onClick={handleFetchStats} disabled={lookupState.loading}>
-                {lookupState.loading ? 'Fetching...' : 'Fetch Stats'}
+              <button className="secondary-cta" onClick={handleRsnLookup} disabled={lookupState.loading}>
+                {lookupState.loading ? 'Looking up...' : 'Lookup RSN'}
               </button>
             </div>
-            {totalLevel ? <p className="helper-text">Total level: {totalLevel}</p> : null}
             {lookupState.error ? <p className="error-text">{lookupState.error}</p> : null}
             {lookupState.success ? <p className="success-text">{lookupState.success}</p> : null}
           </div>
