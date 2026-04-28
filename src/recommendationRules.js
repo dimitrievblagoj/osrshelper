@@ -1,8 +1,3 @@
-/**
- * Simple rule-based recommendation engine for MVP.
- * Keep this file focused on data and logic so it can be expanded later.
- */
-
 export const budgetOptions = ['0–1M', '1–10M', '10–50M', '50M+'];
 export const accountTypeOptions = ['Main', 'Ironman', 'UIM', 'Hardcore Ironman'];
 
@@ -184,16 +179,13 @@ export function getRecommendations(profile) {
   let bestGoal = 'Build a balanced combat base (70+ combat stats) and keep questing for key unlocks.';
   let skillToTrain = 'Train Strength for faster melee progression and easier general PvM.';
 
-  if (stats.prayer < 43) {
-    bestGoal = 'Get 43 Prayer for all core protection prayers.';
-    skillToTrain = 'Prayer';
-    explanations.push('Protection prayers dramatically improve survivability in quests and PvM.');
-  }
+function evaluatePvm(profile, boss) {
+  const { stats, quests } = profile;
+  const req = boss.requirements || {};
 
-  if (!quests.recipeForDisaster) {
-    bestGoal = 'Complete Recipe for Disaster to unlock Barrows Gloves.';
-    explanations.push('Barrows Gloves are one of the best-value upgrades for almost every combat style.');
-  }
+  const missingStats = Object.entries(req.stats || {})
+    .map(([skill, level]) => ({ skill, current: stats[skill] ?? 1, needed: level, gap: Math.max(level - (stats[skill] ?? 1), 0) }))
+    .filter((s) => s.gap > 0);
 
   if (!quests.kingsRansom && stats.defence >= 65 && stats.prayer >= 60) {
     explanations.push('King’s Ransom is close and unlocks Piety, which is a major melee DPS spike.');
@@ -267,6 +259,59 @@ export function getRecommendations(profile) {
       priority: 0
     });
   }
+
+  if (stats.slayer < 75) skillToTrain = 'Slayer';
+  else if (stats.ranged < 80) skillToTrain = 'Ranged';
+  else if (stats.magic < 80) skillToTrain = 'Magic';
+
+  const now = [];
+  const close = [];
+  const locked = [];
+
+  PVM_BOSSES.forEach((boss) => {
+    const evaluation = evaluatePvm(profile, boss);
+    const mapped = mapBossOutput(boss, evaluation, accountType);
+
+    if (evaluation.isNow) now.push(mapped);
+    else if (evaluation.isClose) close.push(mapped);
+    else locked.push(mapped);
+  });
+
+  const sortDesc = (a, b) => b.priority - a.priority;
+  now.sort(sortDesc);
+  close.sort(sortDesc);
+  locked.sort(sortDesc);
+
+  const skillingActivities = SKILLING_ACTIVITIES.map((activity) => {
+    const trackedValue = stats[activity.trackedSkill];
+    if (typeof trackedValue !== 'number') {
+      return {
+        name: activity.name,
+        category: activity.category,
+        note: `Not recommended yet: ${activity.name} — ${activity.trackedSkill} level is not tracked in this version.`
+      };
+    }
+
+    if (trackedValue < activity.recommendedLevel) {
+      return {
+        name: activity.name,
+        category: activity.category,
+        note: `Not recommended yet: ${activity.name} — ${activity.trackedSkill} ${trackedValue}/${activity.recommendedLevel} (minimum ${activity.minimumLevel}).`
+      };
+    }
+
+    return {
+      name: activity.name,
+      category: activity.category,
+      note: `Ready: ${activity.name} — ${activity.trackedSkill} ${trackedValue}/${activity.recommendedLevel}.`
+    };
+  });
+
+  if (accountType === 'Main') explanations.push('Account type note: mains are weighted slightly toward efficient GP PvM.');
+  if (accountType === 'Ironman' || accountType === 'UIM') explanations.push('Account type note: iron accounts are weighted toward unlock value.');
+  if (accountType === 'Hardcore Ironman') explanations.push('Account type note: high-risk content gets stronger warnings for Hardcore safety.');
+  explanations.push('Combat Bosses You Can Try Now only includes combat PvM and raids with requirements met.');
+  explanations.push('Skilling activities are separated and suppressed from combat recommendations when stats are not tracked.');
 
   return {
     bestGoal,

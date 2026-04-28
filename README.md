@@ -83,3 +83,10 @@ Vercel will detect the `api/` directory and deploy `api/hiscores.js` as a server
 - Add per-boss gear templates and setup checklists.
 - Add save/load profile support (local storage first, backend later).
 - Add test coverage for recommendation rule scenarios.
+
+
+## Recommendation scope (MVP)
+
+- This MVP currently focuses on **combat PvM and raid recommendations** using combat/slayer/prayer stats plus key quest unlocks.
+- Skilling bosses/activities (like Tempoross, Wintertodt, Hespori) are intentionally separated and not included in core combat boss recommendations when their required skilling stats are not tracked.
+- Full skilling-boss recommendations will be expanded once skilling stats are added to profile inputs.
