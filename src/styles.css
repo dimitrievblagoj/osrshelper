@@ -186,32 +186,3 @@ body {
     grid-template-columns: 1fr;
   }
 }
-
-.boss-list {
-  display: grid;
-  gap: 10px;
-}
-
-.boss-item {
-  border: 1px solid var(--border);
-  border-radius: 10px;
-  padding: 10px;
-  background: rgba(12, 16, 24, 0.5);
-}
-
-.boss-item h4 {
-  margin: 0 0 6px;
-}
-
-.boss-item p {
-  margin: 5px 0;
-}
-
-.boss-difficulty {
-  color: var(--muted);
-  font-size: 0.9rem;
-}
-
-.warning-text {
-  color: #ffb07a;
-}
