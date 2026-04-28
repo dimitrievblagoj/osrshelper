@@ -64,6 +64,34 @@ function BossSection({ title, summary, items, visibleCount, expanded, onToggle }
   );
 }
 
+function BossList({ bosses }) {
+  return (
+    <div className="boss-list">
+      {bosses.map((boss) => (
+        <article className="boss-item" key={boss.name}>
+          <h4>
+            {boss.name} <span className="boss-difficulty">({boss.difficulty})</span>
+          </h4>
+          <p><strong>Style:</strong> {boss.style}</p>
+          <p><strong>Why do this:</strong> {boss.why}</p>
+          <p><strong>What it teaches:</strong> {boss.teaches}</p>
+          {boss.requirementsMet.length > 0 ? (
+            <p><strong>Requirements met:</strong> {boss.requirementsMet.join(', ')}</p>
+          ) : null}
+          {boss.requirementsMissing.length > 0 ? (
+            <p><strong>Requirements missing:</strong> {boss.requirementsMissing.join(', ')}</p>
+          ) : null}
+          {boss.warning ? <p className="warning-text"><strong>Warning:</strong> {boss.warning}</p> : null}
+          {boss.accountNote ? <p className="helper-text"><strong>Account note:</strong> {boss.accountNote}</p> : null}
+        </article>
+      ))}
+    </div>
+  );
+}
+
+/**
+ * Shows recommendation output in a structured card.
+ */
 export default function ResultsCard({ results }) {
   const [expanded, setExpanded] = useState({ now: false, close: false, locked: false, skilling: false });
 
@@ -80,64 +108,46 @@ export default function ResultsCard({ results }) {
 
   return (
     <div className="results-card">
-      <section className="hero-next-move">
-        <div className="hero-header">
-          <h2>🎯 Your Next Move</h2>
-          <span className="badge badge-priority">High Priority</span>
-        </div>
-        <p className="hero-goal">{results.bestGoal}</p>
+      <h2>Recommended Next Move</h2>
+
+      <section>
+        <h3>1) Best next account goal</h3>
+        <p>{results.bestGoal}</p>
+      </section>
+
+      <section>
+        <h3>2) Bosses You Can Try Now</h3>
+        <BossList bosses={results.bossesNowDetailed} />
+      </section>
+
+      <section>
+        <h3>3) You Are Close To</h3>
+        <BossList bosses={results.closeBossesDetailed} />
+      </section>
+
+      <section>
+        <h3>4) Locked For Later</h3>
+        <BossList bosses={results.lockedBossesDetailed} />
+      </section>
+
+      <section>
+        <h3>5) Recommended skill to train next</h3>
+        <p>{results.skillToTrain}</p>
+      </section>
+
+      <section>
+        <h3>6) Suggested gear upgrade (budget-based)</h3>
+        <p>{results.gearUpgrade}</p>
+      </section>
+
+      <section>
+        <h3>7) Why these recommendations?</h3>
         <ul>
-          {topActions.map((item) => (
+          {results.explanations.map((item) => (
             <li key={item}>{item}</li>
           ))}
         </ul>
       </section>
-
-      <BossSection
-        title="Combat Bosses You Can Try Now"
-        summary={`${results.bossesNowDetailed.length} bosses ready now`}
-        items={results.bossesNowDetailed}
-        visibleCount={DEFAULT_VISIBLE}
-        expanded={expanded.now}
-        onToggle={() => setExpanded((prev) => ({ ...prev, now: !prev.now }))}
-      />
-
-      <BossSection
-        title="Combat Bosses You Are Close To"
-        summary={`${results.closeBossesDetailed.length} bosses close to unlocking`}
-        items={results.closeBossesDetailed}
-        visibleCount={DEFAULT_VISIBLE}
-        expanded={expanded.close}
-        onToggle={() => setExpanded((prev) => ({ ...prev, close: !prev.close }))}
-      />
-
-      <BossSection
-        title="Locked PvM Goals"
-        summary={`${results.lockedBossesDetailed.length} long-term goals`}
-        items={results.lockedBossesDetailed}
-        visibleCount={DEFAULT_VISIBLE}
-        expanded={expanded.locked}
-        onToggle={() => setExpanded((prev) => ({ ...prev, locked: !prev.locked }))}
-      />
-
-      {results.skillingActivities && results.skillingActivities.length > 0 ? (
-        <section className="results-section">
-          <div className="section-head">
-            <h3>Skilling Activities</h3>
-            <p className="muted">{results.skillingActivities.length} optional activities</p>
-          </div>
-          <ul className="compact-list">
-            {(expanded.skilling ? results.skillingActivities : results.skillingActivities.slice(0, 4)).map((activity) => (
-              <li key={activity.name}>{activity.note}</li>
-            ))}
-          </ul>
-          {results.skillingActivities.length > 4 ? (
-            <button className="link-btn" onClick={() => setExpanded((prev) => ({ ...prev, skilling: !prev.skilling }))}>
-              {expanded.skilling ? 'Show less' : `Show more (${results.skillingActivities.length - 4} more)`}
-            </button>
-          ) : null}
-        </section>
-      ) : null}
 
       <section className="results-section compact-meta">
         <h3>Recommended account upgrades</h3>
