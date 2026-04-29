@@ -192,3 +192,14 @@ body {
     grid-template-columns: 1fr;
   }
 }
+
+.share-actions {
+  margin-top: 12px;
+  display: grid;
+  gap: 8px;
+  justify-items: start;
+}
+
+.share-actions .secondary-cta {
+  min-width: 180px;
+}
