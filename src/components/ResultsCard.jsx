@@ -38,7 +38,7 @@ function CategorySection({ title, items }) {
 }
 
 
-function getPersonalityInsight(accountSummary, recommendations, bottlenecks) {
+function getPersonalityInsight(accountSummary, recommendations, bottlenecks, accountType) {
   const topRec = recommendations[0]?.name;
   const bottleneckText = `${accountSummary?.biggestBottleneck || ''} ${(bottlenecks || []).join(' ')}`.toLowerCase();
 
@@ -49,6 +49,10 @@ function getPersonalityInsight(accountSummary, recommendations, bottlenecks) {
   if ((accountSummary?.accountStage || '').includes('Mid') && topRec === 'Fight Caves') return 'Your stats say mid-game; your cape slot says unfinished business.';
   if ((accountSummary?.nextBestAction || '').toLowerCase().includes('raid') || topRec?.toLowerCase().includes('tombs')) return 'You’re raid-close, but not raid-ready.';
   if (accountSummary?.strongestUnlock && accountSummary.strongestUnlock !== 'Not tracked yet') return `Strong unlock detected: lean into ${accountSummary.strongestUnlock}.`;
+
+  if (accountType === 'UIM') return 'Inventory pain detected. Prioritize unlocks that reduce friction.';
+  if (accountType === 'Hardcore Ironman') return 'Play safer. Your next recommendation should not be a death trap.';
+  if (accountType === 'Ironman') return 'Your next move is an unlock, not the Grand Exchange.';
 
   return 'Your account has a clear next move. Stop guessing.';
 }
@@ -78,7 +82,7 @@ function drawWrappedText(ctx, text, x, y, maxWidth, lineHeight, color = '#d8dded
   return lineY + lineHeight;
 }
 
-export default function ResultsCard({ results, rsn }) {
+export default function ResultsCard({ results, rsn, accountType }) {
   const [shareState, setShareState] = useState({ loading: false, success: '', error: '' });
   const [showAllRecommendations, setShowAllRecommendations] = useState(false);
 
@@ -234,7 +238,8 @@ export default function ResultsCard({ results, rsn }) {
   const personalityInsight = getPersonalityInsight(
     results.progressionSummary,
     prioritizedRecommendations,
-    (results.progressionSummary?.biggestBottleneck || '').split('/').map((item) => item.trim()).filter(Boolean)
+    (results.progressionSummary?.biggestBottleneck || '').split('/').map((item) => item.trim()).filter(Boolean),
+    accountType
   );
 
   return (
@@ -243,6 +248,7 @@ export default function ResultsCard({ results, rsn }) {
       {results.progressionSummary ? (
         <section className="progression-summary-card">
           <h3>Account Progression Summary</h3>
+          <p><strong>Account Type:</strong> {accountType || 'Unknown'}</p>
           <p><strong>Account Stage:</strong> {results.progressionSummary.accountStage}</p>
           <p><strong>Progression Score:</strong> {results.progressionSummary.progressionScore}/100</p>
           <p><strong>Strongest Unlock:</strong> {results.progressionSummary.strongestUnlock}</p>
