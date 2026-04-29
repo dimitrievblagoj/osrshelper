@@ -65,6 +65,11 @@ export default function App() {
       }
 
       setStats((previous) => ({ ...previous, ...payload.stats }));
+      if (payload.accountType) {
+        const normalized = payload.accountType === 'Ultimate Ironman' ? 'UIM' : payload.accountType;
+        setAccountType(normalized);
+      }
+      setHasSubmitted(true);
       setLookupState({ loading: false, error: '', success: `Loaded combat + Slayer levels for ${payload.rsn}.` });
     } catch (error) {
       setLookupState({
@@ -93,6 +98,12 @@ export default function App() {
                 type="text"
                 value={rsn}
                 onChange={(event) => setRsn(event.target.value)}
+                onKeyDown={(event) => {
+                  if (event.key === 'Enter') {
+                    event.preventDefault();
+                    handleRsnLookup();
+                  }
+                }}
                 maxLength={12}
                 placeholder="Enter RSN..."
               />
@@ -156,7 +167,7 @@ export default function App() {
         </section>
 
         <section className="panel">
-          <ResultsCard results={results} rsn={rsn} />
+          <ResultsCard results={results} rsn={rsn} accountType={accountType} />
         </section>
       </div>
     </main>

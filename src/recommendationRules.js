@@ -211,8 +211,16 @@ export function getRecommendations(profile) {
     `${accountType} profile weighting favors progression unlocks over filler content.`
   ];
 
+  const accountTypeActionNudge = accountType === 'UIM'
+    ? ' Inventory pain detected. Prioritize unlocks that reduce friction.'
+    : accountType === 'Hardcore Ironman'
+      ? ' Play safer: avoid high-risk deaths while pushing progression.'
+      : accountType === 'Ironman'
+        ? ' Focus on self-sufficient unlocks over GE buys.'
+        : '';
+
   return {
-    nextBestAction,
+    nextBestAction: `${nextBestAction}${accountTypeActionNudge}`,
     progressionSummary: buildProgressionSummary(profile, evaluated, nextBestAction),
     categories: byCategory,
     gearUpgrade: suggestedGearByBudget[budget],
