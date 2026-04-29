@@ -189,7 +189,7 @@ export default function App() {
         </section>
 
         <section className="panel">
-          <ResultsCard results={results} />
+          <ResultsCard results={results} rsn={rsn} />
         </section>
       </div>
     </main>
