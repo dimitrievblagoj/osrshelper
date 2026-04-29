@@ -56,4 +56,35 @@ describe('getRecommendations', () => {
     const allNames = Object.values(result.categories).flat().map((b) => b.name);
     expect(allNames).not.toEqual(expect.arrayContaining(['Tempoross', 'Wintertodt', 'Guardians of the Rift']));
   });
+
+  it('classifies low-level accounts as beginner and surfaces clear bottlenecks', () => {
+    const profile = structuredClone(baseProfile);
+    profile.stats.attack = 45;
+    profile.stats.strength = 45;
+    profile.stats.defence = 45;
+    profile.stats.ranged = 50;
+    profile.stats.magic = 50;
+
+    const result = getRecommendations(profile);
+    expect(result.progressionSummary.accountStage).toBe('Beginner');
+    expect(result.progressionSummary.biggestBottleneck).toContain('Low Prayer');
+  });
+
+  it('increases progression score and stage for high-level accounts', () => {
+    const profile = structuredClone(baseProfile);
+    profile.stats.attack = 97;
+    profile.stats.strength = 96;
+    profile.stats.defence = 95;
+    profile.stats.ranged = 99;
+    profile.stats.magic = 98;
+    profile.stats.prayer = 80;
+    profile.quests.recipeForDisaster = true;
+    profile.quests.dragonSlayer2 = true;
+    profile.quests.secretsOfTheNorth = true;
+    profile.quests.beneathCursedSands = true;
+
+    const result = getRecommendations(profile);
+    expect(result.progressionSummary.accountStage).toBe('End Game');
+    expect(result.progressionSummary.progressionScore).toBeGreaterThan(80);
+  });
 });
