@@ -24,45 +24,36 @@ const baseProfile = {
     priestInPeril: true,
     sinsOfTheFather: false,
     songOfTheElves: false,
+    secretsOfTheNorth: false,
     beneathCursedSands: false
-  },
-  diaries: {
-    varrockMedium: false,
-    lumbridgeMedium: false,
-    morytaniaHard: false,
-    westernProvincesHard: false
-  },
-  untradeables: {
-    fireCape: false,
-    fighterTorso: false,
-    imbuedGodCape: false,
-    barrowsGloves: false,
-    assembler: false
   },
   budget: '1–10M',
   accountType: 'Main'
 };
 
 describe('getRecommendations', () => {
-  it('prioritizes barrows gloves when RFD not complete', () => {
+  it('returns beginner-focused recommendations for lower-mid account', () => {
     const result = getRecommendations(baseProfile);
-    expect(result.bestGoal.toLowerCase()).toContain('barrows gloves');
+    const beginnerNames = result.categories['Beginner Bosses'].map((b) => b.name);
+    expect(beginnerNames).toContain('Giant Mole');
+    expect(result.nextBestAction.toLowerCase()).toContain('recipe for disaster');
   });
 
-  it('adds vorkath when DS2 complete and ranged >= 75', () => {
+  it('surfaces mid-game upgrades when eligible', () => {
     const profile = structuredClone(baseProfile);
-    profile.stats.ranged = 80;
-    profile.quests.dragonSlayer2 = true;
+    profile.stats.attack = 70;
+    profile.stats.strength = 70;
+    profile.stats.defence = 70;
+    profile.stats.ranged = 75;
 
     const result = getRecommendations(profile);
-    expect(result.bossesNow.some((b) => b.toLowerCase().includes('vorkath'))).toBe(true);
+    const midNames = result.categories['Mid Game Bosses'].map((b) => b.name);
+    expect(midNames).toEqual(expect.arrayContaining(['Barrows', 'Scurrius', 'Sarachnis', 'Fight Caves']));
   });
 
-  it('adds account type explanation for ironman variants', () => {
-    const profile = structuredClone(baseProfile);
-    profile.accountType = 'Ironman';
-
-    const result = getRecommendations(profile);
-    expect(result.explanations.some((e) => e.toLowerCase().includes('account type note'))).toBe(true);
+  it('does not show skilling bosses in default combat categories', () => {
+    const result = getRecommendations(baseProfile);
+    const allNames = Object.values(result.categories).flat().map((b) => b.name);
+    expect(allNames).not.toEqual(expect.arrayContaining(['Tempoross', 'Wintertodt', 'Guardians of the Rift']));
   });
 });
