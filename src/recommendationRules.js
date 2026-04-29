@@ -44,6 +44,13 @@ const RECOMMENDATIONS = [
 ];
 
 const SKILLING_BOSSES = ['Tempoross', 'Wintertodt', 'Guardians of the Rift'];
+const TRACKED_MAJOR_UNLOCKS = [
+  { label: 'Fire Cape', requiresQuest: null, requiresStats: { ranged: 70, defence: 60, prayer: 43 } },
+  { label: 'Barrows Gloves', requiresQuest: 'recipeForDisaster' },
+  { label: 'Vorkath Access', requiresQuest: 'dragonSlayer2' },
+  { label: 'Phantom Muspah Access', requiresQuest: 'secretsOfTheNorth' },
+  { label: 'ToA Entry Access', requiresQuest: 'beneathCursedSands' }
+];
 
 function getQuestLabel(key) {
   return questList.find((q) => q.key === key)?.label || key;
@@ -100,6 +107,72 @@ function buildNextBestAction(profile, raidEvaluations) {
   return 'Start consistent Fight Caves attempts for your Fire Cape if you still need it.';
 }
 
+function getAccountStage(stats) {
+  const combatLevels = [stats.attack, stats.strength, stats.defence, stats.ranged, stats.magic];
+  const averageCombat = combatLevels.reduce((sum, level) => sum + level, 0) / combatLevels.length;
+  const highCount = combatLevels.filter((level) => level >= 95).length;
+
+  if (highCount >= 4) return 'End Game';
+  if (averageCombat >= 85) return 'Late Mid Game';
+  if (averageCombat >= 70) return 'Mid Game';
+  if (averageCombat >= 60) return 'Early Mid Game';
+  return 'Beginner';
+}
+
+function buildProgressionSummary(profile, evaluated, nextBestAction) {
+  const { stats, quests } = profile;
+  const stage = getAccountStage(stats);
+  const bossRecommendations = evaluated.filter((item) => item.rec.category !== 'Raids Readiness');
+  const raidRecommendations = evaluated.filter((item) => item.rec.category === 'Raids Readiness');
+  const bossEligible = bossRecommendations.filter((item) => item.evaluation.isEligible).length;
+  const raidEligible = raidRecommendations.filter((item) => item.evaluation.isEligible).length;
+
+  // Account Progression Score:
+  // - Combat readiness (35): averaged core combat stats.
+  // - Prayer readiness (15): scales prayer level to key breakpoint 77.
+  // - Style readiness (20): melee/ranged/magic tribrid prep.
+  // - PvM unlock depth (20): eligible boss count + raid count.
+  // - Major unlock progression (10): tracked quest/stat unlocks.
+  const coreCombatAverage = (stats.attack + stats.strength + stats.defence + stats.ranged + stats.magic) / 5;
+  const combatScore = Math.min(35, Math.round((coreCombatAverage / 99) * 35));
+  const prayerScore = Math.min(15, Math.round((stats.prayer / 77) * 15));
+  const meleeReadiness = Math.min(stats.attack, stats.strength, stats.defence);
+  const rangedReadiness = Math.min(stats.ranged, stats.defence);
+  const magicReadiness = Math.min(stats.magic, stats.defence);
+  const styleReadinessAverage = (meleeReadiness + rangedReadiness + magicReadiness) / 3;
+  const styleScore = Math.min(20, Math.round((styleReadinessAverage / 90) * 20));
+  const bossScore = Math.min(14, bossEligible * 2);
+  const raidScore = Math.min(6, raidEligible * 2);
+  const majorUnlocks = TRACKED_MAJOR_UNLOCKS.map((unlock) => {
+    const questMet = unlock.requiresQuest ? Boolean(quests?.[unlock.requiresQuest]) : true;
+    const statMet = unlock.requiresStats
+      ? Object.entries(unlock.requiresStats).every(([skill, needed]) => getLevel(stats, skill) >= needed)
+      : true;
+    return { ...unlock, met: questMet && statMet };
+  });
+  const unlockScore = Math.round((majorUnlocks.filter((u) => u.met).length / TRACKED_MAJOR_UNLOCKS.length) * 10);
+  const score = Math.min(100, combatScore + prayerScore + styleScore + bossScore + raidScore + unlockScore);
+
+  const strongestUnlock = majorUnlocks.find((u) => u.met)?.label || 'Not tracked yet';
+  const bottlenecks = [];
+  if (!majorUnlocks.find((u) => u.label === 'Fire Cape')?.met) bottlenecks.push('No Fire Cape');
+  if (stats.prayer < 70) bottlenecks.push('Low Prayer');
+  if (stats.ranged < 75) bottlenecks.push('Low Ranged');
+  if (stats.magic < 75) bottlenecks.push('Low Magic');
+
+  const nextLateGame = evaluated
+    .filter((item) => item.rec.category === 'Late Game Goals' && !item.evaluation.isEligible)
+    .sort((a, b) => a.evaluation.totalGap - b.evaluation.totalGap)[0];
+
+  return {
+    accountStage: stage,
+    progressionScore: score,
+    strongestUnlock,
+    biggestBottleneck: bottlenecks.length ? bottlenecks.join(' / ') : 'Not tracked yet',
+    nextBestAction: nextLateGame ? `Push ${nextLateGame.rec.name}: ${nextLateGame.evaluation.missing.join(', ')}` : nextBestAction
+  };
+}
+
 export function getRecommendations(profile) {
   const { budget, accountType = 'Main' } = profile;
 
@@ -140,6 +213,7 @@ export function getRecommendations(profile) {
 
   return {
     nextBestAction,
+    progressionSummary: buildProgressionSummary(profile, evaluated, nextBestAction),
     categories: byCategory,
     gearUpgrade: suggestedGearByBudget[budget],
     explanations

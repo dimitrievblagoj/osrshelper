@@ -57,6 +57,16 @@ export default function ResultsCard({ results }) {
   return (
     <div className="results-card">
       <h2>Combat Recommendations</h2>
+      {results.progressionSummary ? (
+        <section className="progression-summary-card">
+          <h3>Account Progression Summary</h3>
+          <p><strong>Account Stage:</strong> {results.progressionSummary.accountStage}</p>
+          <p><strong>Progression Score:</strong> {results.progressionSummary.progressionScore}/100</p>
+          <p><strong>Strongest Unlock:</strong> {results.progressionSummary.strongestUnlock}</p>
+          <p><strong>Biggest Bottleneck:</strong> {results.progressionSummary.biggestBottleneck}</p>
+          <p><strong>Next Best Action:</strong> {results.progressionSummary.nextBestAction}</p>
+        </section>
+      ) : null}
 
       <section>
         <h3>Next Best Action</h3>
