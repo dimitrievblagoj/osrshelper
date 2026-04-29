@@ -52,6 +52,9 @@ const TRACKED_MAJOR_UNLOCKS = [
   { label: 'ToA Entry Access', requiresQuest: 'beneathCursedSands' }
 ];
 
+const IRONMAN_TYPES = new Set(['Ironman', 'Hardcore Ironman', 'UIM', 'Ultimate Ironman']);
+const TRADE_BLOCKED_TERMS = ['buy', 'grand exchange', ' ge ', 'purchase', 'flip'];
+
 function getQuestLabel(key) {
   return questList.find((q) => q.key === key)?.label || key;
 }
@@ -89,9 +92,56 @@ function evaluateRequirements(profile, rec) {
   return { isEligible, isClose, met, missing, totalGap };
 }
 
-function buildNextBestAction(profile, raidEvaluations) {
+function isIronmanType(accountType) {
+  return IRONMAN_TYPES.has(accountType);
+}
+
+function convertToIronmanStep(step = '') {
+  if (!step) return 'Progress this upgrade through Slayer, boss drops, or quest unlocks.';
+  return step
+    .replace(/buy/gi, 'work toward')
+    .replace(/purchase/gi, 'unlock')
+    .replace(/from\s+the\s+grand\s+exchange/gi, 'through drops, Slayer, or quests')
+    .replace(/\bGE\b/gi, 'self-sufficient progression')
+    .replace(/flip/gi, 'grind');
+}
+
+function hasTradeLanguage(value = '') {
+  const normalized = ` ${String(value).toLowerCase()} `;
+  return TRADE_BLOCKED_TERMS.some((term) => normalized.includes(term));
+}
+
+function adjustForAccountType(recommendations, accountType) {
+  if (!isIronmanType(accountType)) return recommendations;
+  return recommendations.map((rec) => {
+    const needsReframe = rec.type === 'gear_upgrade' || hasTradeLanguage(rec.why) || hasTradeLanguage(rec.nextStep);
+    if (!needsReframe) return rec;
+    return {
+      ...rec,
+      reason: 'Unlock or grind this gear instead of buying it.',
+      why: hasTradeLanguage(rec.why) ? 'Upgrade this setup through boss drops, Slayer rewards, and quest unlocks.' : rec.why,
+      nextStep: convertToIronmanStep(rec.nextStep)
+    };
+  });
+}
+
+function buildNextBestAction(profile, raidEvaluations, accountType = 'Main') {
   const { stats, quests } = profile;
   const avgCombat = Math.floor((stats.attack + stats.strength + stats.defence + stats.ranged + stats.magic) / 5);
+
+  if (accountType === 'UIM' || accountType === 'Ultimate Ironman') {
+    if (!quests.recipeForDisaster) return 'Complete Recipe for Disaster first for high-impact unlock efficiency and flexible loadouts.';
+    return 'Prioritize compact progression: Slayer unlocks and untradeables with low inventory friction.';
+  }
+  if (accountType === 'Hardcore Ironman') {
+    if (avgCombat < 75 || stats.prayer < 70) return 'Build safer foundations first: raise combat stats and Prayer before high-risk bosses.';
+    return 'Prioritize safe boss progression and Slayer unlocks; avoid risky content until over-prepared.';
+  }
+  if (accountType === 'Ironman') {
+    if (!quests.recipeForDisaster) return 'Complete Recipe for Disaster to secure Barrows Gloves and self-sufficient combat progression.';
+    if (stats.slayer < 75) return `Push Slayer toward 75 for Kraken and core unlock-based upgrades (${stats.slayer}/75).`;
+    return 'Prioritize untradeable unlocks, Slayer progression, and boss drops over trade-based shortcuts.';
+  }
 
   if (avgCombat < 65) return 'Train core combat stats to at least 65 (Attack/Strength/Defence/Ranged/Magic).';
   if (stats.prayer < 43) return `Train Prayer to 43 first (${stats.prayer}/43).`;
@@ -192,6 +242,7 @@ export function getRecommendations(profile) {
         id: rec.id,
         name: rec.name,
         category: rec.category,
+        type: 'boss_progression',
         difficulty: rec.difficulty,
         why: rec.reason,
         requirementsMet: evaluation.met,
@@ -202,7 +253,11 @@ export function getRecommendations(profile) {
     }
   });
 
-  const nextBestAction = buildNextBestAction(profile, evaluated.filter((r) => r.rec.category === 'Raids Readiness'));
+  Object.keys(byCategory).forEach((category) => {
+    byCategory[category] = adjustForAccountType(byCategory[category], accountType);
+  });
+
+  const nextBestAction = buildNextBestAction(profile, evaluated.filter((r) => r.rec.category === 'Raids Readiness'), accountType);
 
   const explanations = [
     'Only activities with met requirements or close gaps are shown.',
@@ -211,19 +266,21 @@ export function getRecommendations(profile) {
     `${accountType} profile weighting favors progression unlocks over filler content.`
   ];
 
-  const accountTypeActionNudge = accountType === 'UIM'
-    ? ' Inventory pain detected. Prioritize unlocks that reduce friction.'
+  const accountTypeActionNudge = accountType === 'UIM' || accountType === 'Ultimate Ironman'
+    ? ' Every slot matters. Choose wisely.'
     : accountType === 'Hardcore Ironman'
-      ? ' Play safer: avoid high-risk deaths while pushing progression.'
+      ? ' One mistake ends it. Play smart.'
       : accountType === 'Ironman'
-        ? ' Focus on self-sufficient unlocks over GE buys.'
+        ? ' You earn everything. No shortcuts.'
         : '';
 
   return {
     nextBestAction: `${nextBestAction}${accountTypeActionNudge}`,
     progressionSummary: buildProgressionSummary(profile, evaluated, nextBestAction),
     categories: byCategory,
-    gearUpgrade: suggestedGearByBudget[budget],
+    gearUpgrade: isIronmanType(accountType)
+      ? 'Build your next upgrades through quest unlocks, Slayer milestones, and boss drops instead of GE purchases.'
+      : suggestedGearByBudget[budget],
     explanations
   };
 }
