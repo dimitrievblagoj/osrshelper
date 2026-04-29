@@ -37,6 +37,22 @@ function CategorySection({ title, items }) {
   );
 }
 
+
+function getPersonalityInsight(accountSummary, recommendations, bottlenecks) {
+  const topRec = recommendations[0]?.name;
+  const bottleneckText = `${accountSummary?.biggestBottleneck || ''} ${(bottlenecks || []).join(' ')}`.toLowerCase();
+
+  if (bottleneckText.includes('low prayer')) return 'Your account is ready for momentum, but your Prayer is holding you hostage.';
+  if (bottleneckText.includes('low ranged')) return 'Stop wandering. Your next move is getting Ranged raid-worthy.';
+  if (bottleneckText.includes('low magic')) return 'You are one magic grind away from real bossing confidence.';
+  if (bottleneckText.includes('no fire cape')) return 'You are one Fire Cape away from looking like you mean business.';
+  if ((accountSummary?.accountStage || '').includes('Mid') && topRec === 'Fight Caves') return 'Your stats say mid-game; your cape slot says unfinished business.';
+  if ((accountSummary?.nextBestAction || '').toLowerCase().includes('raid') || topRec?.toLowerCase().includes('tombs')) return 'You’re raid-close, but not raid-ready.';
+  if (accountSummary?.strongestUnlock && accountSummary.strongestUnlock !== 'Not tracked yet') return `Strong unlock detected: lean into ${accountSummary.strongestUnlock}.`;
+
+  return 'Your account has a clear next move. Stop guessing.';
+}
+
 function drawWrappedText(ctx, text, x, y, maxWidth, lineHeight, color = '#d8dded') {
   const words = text.split(' ');
   let line = '';
@@ -64,6 +80,7 @@ function drawWrappedText(ctx, text, x, y, maxWidth, lineHeight, color = '#d8dded
 
 export default function ResultsCard({ results, rsn }) {
   const [shareState, setShareState] = useState({ loading: false, success: '', error: '' });
+  const [showAllRecommendations, setShowAllRecommendations] = useState(false);
 
   const shareData = useMemo(() => {
     if (!results) return null;
@@ -209,6 +226,17 @@ export default function ResultsCard({ results, rsn }) {
     'Raids Readiness'
   ];
 
+  const prioritizedRecommendations = categories
+    .flatMap((category) => results.categories[category] || [])
+    .filter((item) => !['Tempoross', 'Wintertodt', 'Guardians of the Rift'].includes(item.name));
+
+  const visibleRecommendations = showAllRecommendations ? prioritizedRecommendations : prioritizedRecommendations.slice(0, 3);
+  const personalityInsight = getPersonalityInsight(
+    results.progressionSummary,
+    prioritizedRecommendations,
+    (results.progressionSummary?.biggestBottleneck || '').split('/').map((item) => item.trim()).filter(Boolean)
+  );
+
   return (
     <div className="results-card">
       <h2>Combat Recommendations</h2>
@@ -230,14 +258,19 @@ export default function ResultsCard({ results, rsn }) {
         </section>
       ) : null}
 
+      <p className="personality-insight"><strong>Insight:</strong> {personalityInsight}</p>
+
       <section>
         <h3>Next Best Action</h3>
         <p>{results.nextBestAction}</p>
       </section>
 
-      {categories.map((category) => (
-        <CategorySection key={category} title={category} items={results.categories[category] || []} />
-      ))}
+      <CategorySection title="Top Recommendations" items={visibleRecommendations} />
+      {prioritizedRecommendations.length > 3 ? (
+        <button className="secondary-cta" onClick={() => setShowAllRecommendations((prev) => !prev)}>
+          {showAllRecommendations ? 'Show fewer recommendations' : 'Show more recommendations'}
+        </button>
+      ) : null}
 
       <section>
         <h3>Suggested Gear Upgrade</h3>

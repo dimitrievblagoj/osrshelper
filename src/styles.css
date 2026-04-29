@@ -203,3 +203,39 @@ body {
 .share-actions .secondary-cta {
   min-width: 180px;
 }
+
+.hero {
+  margin-bottom: 16px;
+}
+
+.hero h1 {
+  font-size: clamp(1.8rem, 2.8vw, 2.6rem);
+  line-height: 1.2;
+}
+
+.hero-lookup {
+  padding: 16px;
+  border: 1px solid #5d4722;
+  border-radius: 12px;
+  background: rgba(208, 155, 69, 0.1);
+}
+
+.hero-lookup .rsn-input,
+.hero-lookup .secondary-cta {
+  min-height: 48px;
+  font-size: 1rem;
+}
+
+.manual-entry summary {
+  cursor: pointer;
+  color: #f2c475;
+  font-weight: 700;
+  margin-bottom: 12px;
+}
+
+.personality-insight {
+  margin: 10px 0 16px;
+  padding: 10px 12px;
+  border-left: 3px solid var(--accent);
+  background: rgba(208, 155, 69, 0.1);
+}

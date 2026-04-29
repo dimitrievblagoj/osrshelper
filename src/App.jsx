@@ -46,39 +46,6 @@ export default function App() {
     return getRecommendations({ stats, quests, budget, accountType });
   }, [stats, quests, budget, accountType, hasSubmitted]);
 
-  async function handleFetchStats() {
-    const trimmedPlayerName = playerName.trim();
-
-    if (!trimmedPlayerName) {
-      setLookupState({ loading: false, error: 'Please enter an RSN before fetching stats.', success: '' });
-      return;
-    }
-
-    setLookupState({ loading: true, error: '', success: '' });
-
-    try {
-      const response = await fetch(`/api/hiscores?player=${encodeURIComponent(trimmedPlayerName)}`);
-      const payload = await response.json();
-
-      if (!response.ok) {
-        throw new Error(getLookupError(payload));
-      }
-
-      setStats((previousStats) => ({
-        ...previousStats,
-        ...payload.stats
-      }));
-      setTotalLevel(payload.stats.totalLevel);
-      setLookupState({ loading: false, error: '', success: `Fetched stats for ${payload.player}.` });
-    } catch (error) {
-      setLookupState({
-        loading: false,
-        error: error instanceof Error ? error.message : 'Something went wrong while fetching stats.',
-        success: ''
-      });
-    }
-  }
-
   async function handleRsnLookup() {
     const trimmedRsn = rsn.trim();
 
@@ -110,18 +77,16 @@ export default function App() {
 
   return (
     <main className="page">
-      <header className="title-wrap">
-        <h1>OSRS Next Move Helper</h1>
-        <p>Beginner-friendly guidance for your next progression step in Old School RuneScape.</p>
+      <header className="title-wrap hero">
+        <h1>Enter your RSN. Find your next best OSRS move.</h1>
+        <p>Get your account stage, progression score, boss recommendations, and biggest bottleneck in seconds.</p>
       </header>
 
       <div className="layout">
         <section className="panel form-panel">
-          <h2>Your Account Snapshot</h2>
+          <h2>Check your account instantly</h2>
 
-          <div className="section-block">
-            <h3>Quick-fill From Hiscores</h3>
-            <p className="helper-text">Use your RSN to auto-fill combat and Slayer levels from the official hiscores.</p>
+          <div className="section-block hero-lookup">
             <div className="rsn-lookup">
               <input
                 className="rsn-input"
@@ -129,17 +94,18 @@ export default function App() {
                 value={rsn}
                 onChange={(event) => setRsn(event.target.value)}
                 maxLength={12}
-                placeholder="Enter RSN"
+                placeholder="Enter RSN..."
               />
               <button className="secondary-cta" onClick={handleRsnLookup} disabled={lookupState.loading}>
-                {lookupState.loading ? 'Looking up...' : 'Lookup RSN'}
+                {lookupState.loading ? 'Checking...' : 'Check My Account'}
               </button>
             </div>
             {lookupState.error ? <p className="error-text">{lookupState.error}</p> : null}
             {lookupState.success ? <p className="success-text">{lookupState.success}</p> : null}
           </div>
 
-          <div className="section-block">
+          <details className="section-block manual-entry">
+            <summary>Enter stats manually</summary>
             <h3>Combat & Slayer Levels</h3>
             <div className="stats-grid">
               <StatInput label="Attack" value={stats.attack} onChange={(v) => setStats((s) => ({ ...s, attack: v }))} />
@@ -151,7 +117,7 @@ export default function App() {
               <StatInput label="Hitpoints" value={stats.hitpoints} onChange={(v) => setStats((s) => ({ ...s, hitpoints: v }))} />
               <StatInput label="Slayer" value={stats.slayer} onChange={(v) => setStats((s) => ({ ...s, slayer: v }))} />
             </div>
-          </div>
+          
 
 
           <div className="section-block">
@@ -186,6 +152,7 @@ export default function App() {
           <button className="cta" onClick={() => setHasSubmitted(true)}>
             Find My Next Move
           </button>
+          </details>
         </section>
 
         <section className="panel">
