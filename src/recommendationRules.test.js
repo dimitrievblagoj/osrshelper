@@ -87,4 +87,23 @@ describe('getRecommendations', () => {
     expect(result.progressionSummary.accountStage).toBe('End Game');
     expect(result.progressionSummary.progressionScore).toBeGreaterThan(80);
   });
+
+  it('reframes gear guidance for ironman-type accounts and removes buy language', () => {
+    const profile = structuredClone(baseProfile);
+    profile.accountType = 'Ironman';
+
+    const result = getRecommendations(profile);
+    expect(result.gearUpgrade.toLowerCase()).not.toContain('buy');
+    expect(result.gearUpgrade).not.toContain('GE');
+    expect(result.nextBestAction).toContain('No shortcuts');
+  });
+
+  it('uses hardcore-safe next best action priorities', () => {
+    const profile = structuredClone(baseProfile);
+    profile.accountType = 'Hardcore Ironman';
+
+    const result = getRecommendations(profile);
+    expect(result.nextBestAction.toLowerCase()).toContain('safe');
+    expect(result.nextBestAction).toContain('Play smart');
+  });
 });
